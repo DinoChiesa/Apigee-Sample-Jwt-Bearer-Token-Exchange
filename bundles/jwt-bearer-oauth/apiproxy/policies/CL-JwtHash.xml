@@ -1,0 +1,8 @@
+<LookupCache name='CL-JwtHash'>
+  <AssignTo>cached_jwthash</AssignTo>
+  <Scope>Application</Scope>
+  <CacheKey>
+    <Prefix>jwt</Prefix>
+    <KeyFragment ref='assertion_hash' />
+  </CacheKey>
+</LookupCache>

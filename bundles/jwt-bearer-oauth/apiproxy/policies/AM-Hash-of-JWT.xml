@@ -1,0 +1,6 @@
+<AssignMessage name='AM-Hash-of-JWT'>
+  <AssignVariable>
+    <Name>assertion_hash</Name>
+    <Template>{sha256Hex(request.formparam.assertion)}</Template>
+  </AssignVariable>
+</AssignMessage>

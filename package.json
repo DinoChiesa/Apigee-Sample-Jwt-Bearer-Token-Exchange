@@ -1,0 +1,16 @@
+{
+  "name": "apigee-sample-jwt-bearer-token-exchange",
+  "version": "1.0.0",
+  "description": "Apigee sample that demonstrates how to exchange a JWT for an access token",
+  "scripts": {
+    "lint": "apigeelint -e CC004,ST004,PO007 -s ./bundles/jwt-bearer-oauth/apiproxy -f table.js",
+    "create-jwt": "node ./create-self-signed-JWT.js"
+  },
+  "dependencies": {
+    "apigeelint": "latest",
+    "console-stamp": "^3.1.2",
+    "jsonwebtoken": "^9.0.2",
+    "node-getopt": "git://github.com/tuxpoldo/node-getopt.git#05e498731c14b648fa332ca78d3a301c5e4be440"
+
+  }
+}

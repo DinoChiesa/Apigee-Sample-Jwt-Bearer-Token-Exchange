@@ -1,0 +1,14 @@
+<AssignMessage name='AM-Invalid-Api-Key'>
+    <Set>
+        <Payload contentType='application/json'>{
+  "error": {
+    "code": 152000,
+    "message": "Invalid client."
+  }
+}
+</Payload>
+        <StatusCode>401</StatusCode>
+        <ReasonPhrase>Unauthorized</ReasonPhrase>
+    </Set>
+    <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</AssignMessage>

@@ -1,0 +1,7 @@
+<AssignMessage name='AM-GrantType'>
+  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
+  <AssignVariable>
+    <Name>grant_type</Name>
+    <Value>client_credentials</Value>
+  </AssignVariable>
+</AssignMessage>

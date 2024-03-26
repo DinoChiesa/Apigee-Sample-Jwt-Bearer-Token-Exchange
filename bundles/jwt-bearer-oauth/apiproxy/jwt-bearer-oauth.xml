@@ -1,0 +1,10 @@
+<APIProxy revision='1' name='jwt-bearer-oauth'>
+  <ConfigurationVersion minorVersion='0' majorVersion='4'/>
+  <Description>An API Proxy bundle to demonstrate RFC7523-style token exchange</Description>
+  <CreatedAt>1480987085599</CreatedAt>
+  <CreatedBy>dino</CreatedBy>
+  <DisplayName>jwt-bearer-oauth</DisplayName>
+  <LastModifiedAt>1481095986110</LastModifiedAt>
+  <LastModifiedBy>orgAdmin</LastModifiedBy>
+  <TargetEndpoints/>
+</APIProxy>

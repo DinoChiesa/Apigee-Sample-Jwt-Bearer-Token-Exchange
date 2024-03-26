@@ -1,0 +1,18 @@
+<RaiseFault name='RF-Invalid-Configuration'>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+  <FaultResponse>
+    <Set>
+      <Payload contentType='application/json'>{
+  "error" : {
+    "code" : 500.01,
+    "message" : "there is a misconfiguration.",
+    "detail" : {
+      "message" : "The client ID is valid, but there is no public key associated with this client."
+    }
+  }
+}
+</Payload>
+      <StatusCode>500</StatusCode>
+    </Set>
+  </FaultResponse>
+</RaiseFault>

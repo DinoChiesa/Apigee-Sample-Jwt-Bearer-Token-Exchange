@@ -1,0 +1,20 @@
+<VerifyJWT name='JWT-Verify-Assertion'>
+  <Algorithm>RS256,RS384</Algorithm>
+  <Source>request.formparam.assertion</Source>
+  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
+
+  <!-- this is the public key extracted from the app metadata -->
+  <PublicKey>
+    <Value ref='extracted.public_key'/>
+  </PublicKey>
+
+  <!-- verify that the issuer is the client (it is self-signed) -->
+  <Issuer ref='extracted.consumer_key'/>
+
+  <!-- verify that the audience is the token-dispensing proxy -->
+  <Audience ref='required_audience'/>
+
+  <!-- verify the lifespan of the token may be no more than 5 minutes -->
+  <MaxLifespan useIssueTime='true'>300s</MaxLifespan>
+
+</VerifyJWT>

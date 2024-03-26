@@ -1,0 +1,160 @@
+<ProxyEndpoint name='token-dispensary'>
+  <Description>Endpoint to exchange JWT for opaque tokens</Description>
+  <HTTPProxyConnection>
+    <BasePath>/jwt-bearer-oauth</BasePath>
+  </HTTPProxyConnection>
+
+  <FaultRules>
+    <FaultRule name='invalid-key'>
+      <Step>
+        <Name>AM-Invalid-Api-Key</Name>
+      </Step>
+      <Condition>fault.name = "InvalidApiKeyForGivenResource" OR
+      fault.name = "InvalidApiKey" OR
+      fault.name = "DeveloperStatusNotActive" OR
+      fault.name = "invalid_client-app_not_approved"</Condition>
+    </FaultRule>
+
+    <FaultRule name='expired-key'>
+      <Step>
+        <Name>AM-Expired-Api-Key</Name>
+      </Step>
+      <Condition>fault.name = "consumer_key_expired"</Condition>
+    </FaultRule>
+
+  </FaultRules>
+
+  <DefaultFaultRule name="default-fault-rule">
+    <Step>
+      <Name>AM-Inject-Proxy-Revision-Header</Name>
+    </Step>
+    <AlwaysEnforce>true</AlwaysEnforce>
+  </DefaultFaultRule>
+
+  <PreFlow name='PreFlow'>
+    <Request/>
+    <Response>
+      <Step>
+        <Name>AM-Clean-Request-Headers-From-Response</Name>
+      </Step>
+    </Response>
+  </PreFlow>
+  <PostFlow name='PostFlow'>
+    <Request/>
+    <Response>
+      <Step>
+        <Name>AM-Inject-Proxy-Revision-Header</Name>
+      </Step>
+    </Response>
+  </PostFlow>
+
+  <Flows>
+    <Flow name='token exchange'>
+      <Description>exchange a JWT for an opaque OAuth token</Description>
+      <Request>
+        <Step>
+          <Name>RF-Invalid-Request</Name>
+          <Condition>request.header.content-type != "application/x-www-form-urlencoded"</Condition>
+        </Step>
+        <Step>
+          <Name>RF-Invalid-Request</Name>
+          <Condition>request.formparam.grant_type != "urn:ietf:params:oauth:grant-type:jwt-bearer"</Condition>
+        </Step>
+        <Step>
+          <Name>RF-Invalid-Request</Name>
+          <Condition>request.formparam.assertion = "null"</Condition>
+        </Step>
+
+        <Step><Name>AM-Hash-of-JWT</Name></Step>
+        <!-- lookup this JWT in the cache, to see if it has been presented previously. -->
+        <Step><Name>CL-JwtHash</Name></Step>
+        <Step>
+          <Name>RF-Invalid-JWT</Name>
+          <Condition>lookupcache.CL-JwtHash.cachehit = true</Condition>
+        </Step>
+
+        <!-- decode to get the issuer. We need to know this to retrieve the public key -->
+        <Step>
+          <Name>JWT-Decode</Name>
+        </Step>
+
+        <Step>
+          <!-- if there is a sub, it must be the same as iss -->
+          <Name>RF-Invalid-JWT</Name>
+          <Condition>jwt.JWT-Decode.decoded.claim.sub != null and
+          jwt.JWT-Decode.decoded.claim.sub != jwt.JWT-Decode.decoded.claim.iss</Condition>
+        </Step>
+
+        <!-- the claimed issuer is the API Key. -->
+        <!-- Look it up and retrieve the public key, and other information about the client. -->
+        <Step>
+          <Name>AE-App</Name>
+        </Step>
+
+        <Step>
+          <!-- if no retrieval, the issuer is invalid -->
+          <Name>RF-Invalid-JWT</Name>
+          <Condition>AccessEntity.AE-App = null</Condition>
+        </Step>
+
+        <Step>
+          <Name>EV-Client-Configuration</Name>
+        </Step>
+        <Step>
+          <!-- if no public key, we have a misconfiguration -->
+          <Name>RF-Invalid-Configuration</Name>
+          <Condition>extracted.public_key = null</Condition>
+        </Step>
+
+        <Step>
+          <!-- If the required algorithm does not match, invalid JWT -->
+          <Name>RF-Invalid-JWT</Name>
+        <Condition>NOT(extracted.required_jwt_algorithm = null) AND
+        NOT(extracted.required_jwt_algorithm = jwt.JWT-Decode.decoded.header.alg)</Condition>
+        </Step>
+
+        <!-- now, verify the JWT with the public key. -->
+        <Step>
+          <Name>AM-Required-Audience</Name>
+        </Step>
+
+        <Step>
+          <!-- The following will throw a fault if the JWT signature does not verify, or
+               if it is expired, or if its lifespan is greater than 5 minutes.  -->
+          <Name>JWT-Verify-Assertion</Name>
+        </Step>
+
+      </Request>
+
+      <Response>
+        <!-- cache the hash of this JWT, so that this proxy
+             won't accept it again (within cache TTL).
+             Because the cache TTL is longer than the max life
+             of the JWT, we are safe even if the cache entry
+             expires..
+        -->
+        <Step><Name>CP-JwtHash</Name></Step>
+        <Step><Name>BA-EncodeCC</Name></Step>
+        <Step><Name>AM-GrantType</Name></Step>
+        <Step><Name>OAuthV2-GenerateAccessToken-CC1</Name></Step>
+        <Step><Name>JS-Groom-Token-Response</Name></Step>
+      </Response>
+
+      <Condition>(proxy.pathsuffix MatchesPath "/token") and (request.verb = "POST")</Condition>
+    </Flow>
+
+    <Flow name='unknown request'>
+      <Request>
+        <Step>
+          <Name>RF-Unknown-Request</Name>
+        </Step>
+      </Request>
+      <Response/>
+    </Flow>
+
+  </Flows>
+
+  <!-- keep this if no target (eg, for oauth token generation and refresh) -->
+  <RouteRule name='NoRouteRule'/>
+
+</ProxyEndpoint>

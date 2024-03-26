@@ -1,0 +1,6 @@
+<AssignMessage name='AM-Required-Audience'>
+  <AssignVariable>
+    <Name>required_audience</Name>
+    <Template>{client.scheme}://{request.header.host}{proxy.basepath}</Template>
+  </AssignVariable>
+</AssignMessage>

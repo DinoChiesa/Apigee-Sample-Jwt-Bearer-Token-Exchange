@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<APIProxy revision="1" name="verify-test">
+  <CreatedAt>1692986886468</CreatedAt>
+  <LastModifiedAt>1692987021910</LastModifiedAt>
+  <BasePaths>/verify-test</BasePaths>
+  <ProxyEndpoints>
+    <ProxyEndpoint>default</ProxyEndpoint>
+  </ProxyEndpoints>
+</APIProxy>

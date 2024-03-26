@@ -1,0 +1,16 @@
+{
+  "operationConfigs": [
+    {
+      "apiSource": "verify-test",
+      "operations": [
+        {
+          "resource": "/*",
+          "methods": [
+            "GET"
+          ]
+        }
+      ]
+    }
+  ],
+  "operationConfigType": "proxy"
+}
