@@ -310,12 +310,12 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
 
    These are some possibilities, where you should see a rejection in the response.
 
-   | token requirement                        | ARGUMENTS to use  |
-   | ---------------------------------------- | ----------------- |
-   | aud claim must be token dispensing proxy | `--audience foo`  |
-   | lifespan < 300s                          | `--lifespan 600s` |
-   | issuer must be client ID                 | `--issuer 600s`   |
-   | signed by the appropriate private key    | `--privatekey keys/alternative-key.pem` |
+   | token requirement                        | ARGUMENTS to use to trigger the rejection  |
+   | ---------------------------------------- | ------------------------------------------ |
+   | aud claim must be token dispensing proxy | `--audience foo`                           |
+   | lifespan < 300s                          | `--lifespan 600s`                          |
+   | issuer must be client ID                 | `--issuer 600s`                            |
+   | signed by the appropriate private key    | `--privatekey keys/alternative-key.pem`    |
 
 6. Create a new JWT, with a short lifespan:
    ```
