@@ -26,12 +26,12 @@ grant_type=client_credentials
 ```
 
 ... where the Authorization header contains a base64-encoded form of the client
-ID and the client secret, concatenated with a colon (:).  If you base64-decode
+ID and the client secret, concatenated with a colon (:). If you base64-decode
 the above blob (`czZCaGR...`), you get `s6BhdRkqt3:gX1fBat3bV`, which would mean, for this request,
 the client ID is `s6BhdRkqt3` and the client secret is `gX1fBat3bV`.
 
 Some security-conscious people judge that this is less than ideal, because there is a secret
-transmitted over the network in every request for token.  IETF RFC 7523 formally
+transmitted over the network in every request for token. IETF RFC 7523 formally
 describes one way to avoid doing that, by relying on public/private key
 encryption.  Instead of sending a client id+secret pair, the client sends an
 _assertion_ that is signed with the client's private key.  No secret ever crosses the network.
@@ -71,9 +71,9 @@ organization, to allow client apps to authenticate via the more secure jwt-beare
 
 ## Dependencies
 
-The provisioning tool depends on the utilities {curl and openssl}, and also the
-bash shell, and the Java-based tool JwtTool, which is included here. To build
-the Java tool you need maven and JDK8.
+The helper scripts used here depend on various unix-ish utilities {npm and node,
+sed and tr, jq, openssl}, and also the bash shell. If you want to invoke calls, you need curl.
+You can do all the setup and testing without these tools, if you like.
 
 
 ## The Proxy Endpoint
@@ -176,7 +176,7 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
 
 ## The Steps:
 
-0. Once you have your terminal opened, make sure you are signed in:
+1. Once you have your terminal opened, make sure you are signed in:
    ```
    gcloud auth login
    ```
@@ -192,7 +192,7 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    Please ignore that,
    and proceed to logging in again.
 
-1. Set your environment.  Modify the [env.sh](./env.sh) file to set the proper
+2. Set your environment.  Modify the [env.sh](./env.sh) file to set the proper
    values for your purposes.
 
    Then, source that file
@@ -200,16 +200,22 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    source ./env.sh
    ```
 
-2. Set up the Apigee entitites, the developer, the product, and the app.
+3. Set up the Apigee entitites, the developer, the product, and the app.
    ```
    ./setup-apigee-entities.sh
    ```
 
-   This script will create a new RSA keypair and store the public key and the
-   private key, separately, in the keys subdirectory. It will attach the
-   corresponding public key as a custom attribute to the configured application.
-
    This all will take a few moments.
+
+   > You could do all of this yourself by manually fiddling with the Apigee UI to
+   > configure all those things.  If you're not clear on how all of those entities all
+   > inter-related, you probably DO want to perform the manual configuration, but
+   > that's not something this sample will cover.
+
+   As part of its work, this script will create a new RSA keypair and store the
+   public key and the private key, separately, in the keys subdirectory. It will
+   attach the corresponding public key as a _custom attribute_ to the configured
+   application.
 
    When the script finishes it will show an output like the following:
    ```
@@ -241,6 +247,12 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    ```
    node ./create-self-signed-JWT.js
    ```
+
+   > Here again, you don't NEED to use this tool to create the JWT.  It's just a convenience.
+   > You can use any tool to create the JWT. If you want an interactive experience try
+   > [this one](https://dinochiesa.github.io/jwt) . Keep in mind that you need to paste in
+   > your private key, the one that the setup script created.  Look in the keys subdirectory.
+
 
    The output will include a line like this:
    ```
@@ -317,11 +329,11 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    You should see an appropriate rejection.
 
 
+## Clean Up
 
-## Deleting the Provisioned artifacts from the System
-
-To remove the developer, the product, and the app, and the proxy, run
-the cleanup script:
+After you are finished experimenting and exploring, you can remove the
+developer, the product, and the app, and the proxies from your organization. To
+do that, run the cleanup script:
 
 ```
 ./clean-apigee-entities.sh
