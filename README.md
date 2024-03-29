@@ -71,7 +71,7 @@ This example shows you how you can implement this flow within your Apigee
 organization, to allow client apps to authenticate via the more secure jwt-bearer approach.
 
 
-## Dependencies
+## Pre-requisites
 
 You need Apigee X to try out this sample.
 
@@ -228,7 +228,12 @@ the shell icon:
    source ./env.sh
    ```
 
-4. Set up the Apigee entitites, the developer, the product, and the app.
+4. Install the dependencies.
+   ```
+   ./install-dependencies.sh
+   ```
+
+5. Set up the Apigee entities: the proxies, the developer, the product, and the app.
    ```
    ./setup-apigee-entities.sh
    ```
@@ -255,7 +260,7 @@ the shell icon:
    export CLIENT_ID="...your-client-id-here......."
    ```
 
-5. Create a new RSA key pair.
+6. Create a new RSA key pair.
 
    ```
    ./produce-key-pair.sh
@@ -278,7 +283,7 @@ the shell icon:
    -----END PUBLIC KEY-----
    ```
 
-6. Associate the public key to the app.
+7. Associate the public key to the app.
    ```
    ./attach-latest-public-key-to-app.sh
    ```
@@ -297,11 +302,11 @@ the shell icon:
    Apigee - should not have access to the private key.
 
 
-7. Navigate to the Apigee UI and examine the configured entities. Pay attention to the
+8. Navigate to the Apigee UI and examine the configured entities. Pay attention to the
    configured app, which has the custom attribute containing the public key.
    ![app](./images/app-with-custom-attr.gif)
 
-8. Use the helper script to create a new signed JWT
+9. Use the helper script to create a new signed JWT
 
    This will be used as an assertion that identifies the app.
 
@@ -329,7 +334,7 @@ the shell icon:
    JWT=eyJhbGciOiJS...full-value-here....
    ```
 
-9. Now, using that self-signed JWT as the "credential", request an opaque access
+10. Now, using that self-signed JWT as the "credential", request an opaque access
    token from the Apigee token-dispensing proxy.
 
    This request uses the jwt-bearer grant type.
@@ -353,7 +358,7 @@ the shell icon:
    }
    ```
 
-10. The access token is now usable; it's a normal access token in Apigee.
+11. The access token is now usable; it's a normal access token in Apigee.
    If you like, you can demonstrate that, by invoking the verify proxy:
 
    ```
