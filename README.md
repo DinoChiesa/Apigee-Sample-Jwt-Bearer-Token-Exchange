@@ -107,6 +107,11 @@ shell. If you want to invoke calls, you need curl.  You can do all the setup and
 without these tools, if you like, but I don't provide specific instructions here for
 doing so.
 
+If you'd prefer to _just watch_, here's a screencast that walks through the sample:
+
+[![Watch the video](https://img.youtube.com/vi/z3VUaetWGmE/maxresdefault.jpg)](https://youtu.be/z3VUaetWGmE)
+
+
 
 ## The Proxy Endpoint
 
