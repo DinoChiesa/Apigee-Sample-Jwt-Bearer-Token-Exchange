@@ -128,17 +128,21 @@ store and transmit (~32 bytes), and easy and fast for Apigee to verify.
 Exchanging a JWT for an opaque token allows a faster token transmission, and
 faster check of the token on the server side, during many many API requests.
 
-This token exchange - a JWT identifying the service for an opaque oauth token -
-is the pattern used by APIs for most public Google services.
+This token exchange - exchanging a JWT that identifies the service (an ID
+token), for an opaque oauth _access_ token - is the pattern used by APIs for
+most public Google services.
 
-You might also ask: _Why not just use a client-credentials grant, as described
-in [the OAuth Standard (RFC 6749)](https://tools.ietf.org/html/rfc6749)?_
+You might also ask: _Why not just use a client-credentials grant, relying on the
+client ID and secret, as described in [the OAuth Standard (RFC
+6749)](https://tools.ietf.org/html/rfc6749)?_
 
 The reason to rely on a signed JWT in the beginning is to avoid sending secrets
-across the network. A client secret is a secret, and in OAuth Client Credentials
-grant, the client must send that secret to the server. With the JWT bearer (RFC
-7523) grant, the client does not transmit secrets. Instead it transmits a
-digital signature which proves that the signer possesses the private key.
+across the network. A client secret _is a secret_, and in OAuth Client
+Credentials grant, the client must send that secret to the server. That is
+something that security experts will advise avoiding, if possible. With the JWT
+bearer (RFC 7523) grant, the client does not transmit secrets. Instead it
+transmits a digital signature, which is not a secret, but which proves that the
+signer possesses the private key.
 
 
 ## The Token Exchange Logic
@@ -169,14 +173,28 @@ described above. To use it, you need a bash shell, with the following tools on y
 * jq
 * sed and tr
 
-You can use Google Cloud Shell for this purpose; it has all of these pre-requisites.  To get there:
-```
- gcloud cloud-shell ssh
-```
+You can use Google Cloud Shell for this purpose; it has all of these
+pre-requisites.  To get there, start from your Apigee project in GCP, and click
+the shell icon:
+
+![cloud-shell](./images/Click-to-open-cloud-shell.png)
+
+> From your own terminal, if you are signed on and you have your project set,
+> you can also get to the cloud shell this way:
+>
+> ```
+>  gcloud cloud-shell ssh
+> ```
+
 
 ## The Steps:
 
-1. Once you have your terminal opened, make sure you are signed in:
+1. Once you have your terminal opened, Clone the repo!
+   ```
+   git clone git@github.com:DinoChiesa/Apigee-Sample-Jwt-Bearer-Token-Exchange.git
+   ```
+
+2. Now, make sure you are signed in to Google Cloud:
    ```
    gcloud auth login
    ```
@@ -192,15 +210,20 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    Please ignore that,
    and proceed to logging in again.
 
-2. Set your environment.  Modify the [env.sh](./env.sh) file to set the proper
-   values for your purposes.
+3. Set your environment.  Change into the directory:
+   ```
+   cd Apigee-Sample-Jwt-Bearer-Token-Exchange
+   ```
 
-   Then, source that file
+   With vi, or with the cloud shell editor, modify the [env.sh](./env.sh) file
+   to set the proper values for your purposes.
+
+   Then, source that file:
    ```
    source ./env.sh
    ```
 
-3. Set up the Apigee entitites, the developer, the product, and the app.
+4. Set up the Apigee entitites, the developer, the product, and the app.
    ```
    ./setup-apigee-entities.sh
    ```
@@ -238,20 +261,31 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
          -d assertion=$JWT -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
    ```
 
-4. Copy/paste the CLIENT\_ID statement from the above, to export it into your environment.
+5. Navigate to the Apigee UI and examine the configured entities. Pay attention to the
+   configured app, which has the custom attribute containing the public key.
+   ![app](./images/app-with-custom-attr.gif)
+
+
+6. Copy/paste the CLIENT\_ID statement from the above, to export it into your environment.
    ```
    export CLIENT_ID="MzZK7SeX...your-client-id-here......."
    ```
 
-5. Create a new self-signed JWT, to use in the request-for-token
+7. While the public key is registered in the app, within Apigee, the private key is stored
+   _only locally_. The client app is the only system that has access to the private key.
+   Apigee in this case should not have access to the private key.
+
+   In this repo, there's a helper script that read the private key and creates a new signed JWT.
+   Run that script now.
    ```
    node ./create-self-signed-JWT.js
    ```
 
    > Here again, you don't NEED to use this tool to create the JWT.  It's just a convenience.
    > You can use any tool to create the JWT. If you want an interactive experience try
-   > [this one](https://dinochiesa.github.io/jwt) . Keep in mind that you need to paste in
-   > your private key, the one that the setup script created.  Look in the keys subdirectory.
+   > [this one](https://dinochiesa.github.io/jwt) . You would need to provide
+   > _your_ private key, the one that the setup script created, and the counterpart to the
+   > registered public key. To get it, look in the keys subdirectory.
 
 
    The output will include a line like this:
@@ -263,7 +297,11 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    JWT=eyJhbGciOiJS...full-value-here....
    ```
 
-6. Request an access token with that self-signed JWT
+8. Now, using that self-signed JWT as the "credential", request an opaque access
+   token from the Apigee token-dispensing proxy.
+
+   This request uses the jwt-bearer grant type.
+
    ```
    curl -i -X POST https://${APIGEE_HOST}/jwt-bearer-oauth/token \
          -d assertion=$JWT -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
@@ -283,23 +321,31 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    }
    ```
 
+9. The access token is now usable; it's a normal access token in Apigee.
+   If you like, you can demonstrate that, by invoking the verify proxy:
+
+   ```
+   ACCESS_TOKEN=...token.string.from.response.above....
+
+   curl -i -X GET https://${APIGEE_HOST}/verify-test/verify \
+         -H "Authorization: Bearer $ACCESS_TOKEN"
+   ```
+
+
+
 ## Exploring and Experimenting
 
-1. Use the Google Cloud Console to examine the custom attributes on the app.
-   You should see the PEM-encoded public key, for each app.
-   With jwt-bearer token exchange, using an RSA algorithm, the app does not use
-   the client secret (aka consumer secret).
 
-2. Copy/paste the self-signed JWT into a decoder like [here](https://dinochiesa.github.io/jwt)
+1. Copy/paste the self-signed JWT into a decoder like [here](https://dinochiesa.github.io/jwt)
    You can view the decoded contents of the header, and the payload.
 
-3. Try to re-submit the same self-signed JWT. You should see a rejection from Apigee. The JWT
+2. Try to re-submit the same self-signed JWT. You should see a rejection from Apigee. The JWT
    is treated as a one-time use assertion.
 
-4. Enable a Debugsession in the Apigee UI.  Observe the proxy execution in the
+3. Enable a Debugsession in the Apigee UI.  Observe the proxy execution in the
    request-for-access-token, for both success cases, and rejections.
 
-5. The token exchange enforces a number of requirements on the self-signed JWT.
+4. The token exchange enforces a number of requirements on the self-signed JWT.
    You can observe this enforcement by changing the arguments to the
    `create-self-signed-JWT.js` program.
 
@@ -317,7 +363,7 @@ You can use Google Cloud Shell for this purpose; it has all of these pre-requisi
    | issuer must be client ID                 | `--issuer 600s`                            |
    | signed by the appropriate private key    | `--privatekey keys/alternative-key.pem`    |
 
-6. Create a new JWT, with a short lifespan:
+5. Create a new JWT, with a short lifespan:
    ```
    node ./create-self-signed-JWT.js --lifespan 5s
    ```
