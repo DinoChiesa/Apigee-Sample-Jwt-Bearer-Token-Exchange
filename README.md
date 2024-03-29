@@ -196,7 +196,7 @@ the shell icon:
 
 1. Once you have your terminal opened, Clone the repo!
    ```
-   git clone git@github.com:DinoChiesa/Apigee-Sample-Jwt-Bearer-Token-Exchange.git
+   git clone https://github.com/DinoChiesa/Apigee-Sample-Jwt-Bearer-Token-Exchange.git
    ```
 
 2. Now, make sure you are signed in to Google Cloud:
@@ -264,8 +264,19 @@ the shell icon:
    A key pair is a matched set of public+private keys.  Cryptographic signatures
    created with the private key can be verified with the public key.
 
-   This script will store the public key and the private key, separately, in the
-   keys subdirectory.
+   This script will store the text encoding for the public key and the private key,
+   separately, in the keys subdirectory.  For example, the public key will look like this:
+   ```
+   -----BEGIN PUBLIC KEY-----
+   MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiZSjKfXTqnUN6eZkSP8A
+   9dVtpP01VlSm1pi8ydMIyrpYpWQLrJNsG3ZpGZ6MahTMnbzlIpGNSa+PgyUHYpnZ
+   3l2Qr4tIzSiOmyiPcOEctcj91X+B3dqmFxq2lLLzkZ9im6vJY/G+F1VLOuS/GWot
+   kmBWPuWVrZJUfo7xS1nVpP5NVSeYYbYNneMvIbI1CUQWXAYvyUhiiEd47oTrHmTY
+   uXyjCclRAPwtHkxcyPgYlcWp07F7ZOMO4cretmB2x50pQwXIPt5h9rhoXtMn8+xy
+   JXFR7JhKo27udRn7bLQZt1bMRRfgMl3XgbPDFCTDHxO6zBLjdi4wjbBic/Erz8BQ
+   YwIDAQAB
+   -----END PUBLIC KEY-----
+   ```
 
 6. Associate the public key to the app.
    ```
@@ -388,7 +399,12 @@ the shell icon:
    ```
    node ./create-self-signed-JWT.js --lifespan 5s
    ```
-   ... and then _wait 10 seconds_ while it expires. Then, submit that expired JWT in the request for token:
+   ... and again copy/paste the JWT value into your shell in order to set it as a variable.
+   ```
+   JWT=eyJh..full-value-here....
+   ```
+
+   Then _wait 6 seconds_ or more while the JWT expires. Then, submit that expired JWT in the request for token:
    ```
    curl -i -X POST https://${APIGEE_HOST}/jwt-bearer-oauth/token \
          -d assertion=$JWT -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer

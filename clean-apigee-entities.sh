@@ -91,8 +91,11 @@ MISSING_ENV_VARS=()
 
 TOKEN=$(gcloud auth print-access-token)
 
-echo "Installing apigeecli"
-curl -s https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | bash
+if [[ ! -d "$HOME/.apigeecli/bin" ]]; then
+    printf "Please install dependencies first. Run ./install-dependencies.sh\n"
+    exit 1
+fi
+
 export PATH=$PATH:$HOME/.apigeecli/bin
 
 DEVELOPER_EMAIL="${PROXY_NAME}-apigeesamples@acme.com"

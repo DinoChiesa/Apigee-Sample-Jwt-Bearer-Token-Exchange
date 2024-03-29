@@ -84,7 +84,7 @@ if (opt.options.scope) {
 const signingOptions = {
         algorithm: opt.options.algorithm || "RS256",
         expiresIn: opt.options.lifespan || "299s",
-        noTimestamp: opt.options.omit_iat
+        noTimestamp: !!opt.options.omit_iat
       };
 
 

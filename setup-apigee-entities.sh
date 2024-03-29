@@ -68,11 +68,11 @@ MISSING_ENV_VARS=()
 
 TOKEN=$(gcloud auth print-access-token)
 
-printf "Installing dependencies\n"
-npm install
+if [[ ! -d "$HOME/.apigeecli/bin" ]]; then
+    printf "Please install dependencies first. Run ./install-dependencies.sh\n"
+    exit 1
+fi
 
-printf "Installing apigeecli\n"
-curl -s https://raw.githubusercontent.com/apigee/apigeecli/main/downloadLatest.sh | bash
 export PATH=$PATH:$HOME/.apigeecli/bin
 
 printf "Running apigeelint\n"

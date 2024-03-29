@@ -37,6 +37,13 @@ MISSING_ENV_VARS=()
     exit 1
 }
 
+if [[ ! -d "$HOME/.apigeecli/bin" ]]; then
+    printf "Please install dependencies first. Run ./install-dependencies.sh\n"
+    exit 1
+fi
+
+export PATH=$PATH:$HOME/.apigeecli/bin
+
 publicKeyFile="${sorted[${#sorted[@]} - 1]}"
 #privateKeyFile="${sorted[${#sorted[@]} - 2]}"
 printf "using public key: %s\n" "${publicKeyFile}"
