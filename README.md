@@ -322,38 +322,38 @@ the shell icon:
    ```
 
 10. Now, using that self-signed JWT as the "credential", request an opaque access
-   token from the Apigee token-dispensing proxy.
+    token from the Apigee token-dispensing proxy.
 
-   This request uses the jwt-bearer grant type.
+    This request uses the jwt-bearer grant type.
 
-   ```
-   curl -i -X POST https://${APIGEE_HOST}/jwt-bearer-oauth/token \
-         -d assertion=$JWT -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
-   ```
+    ```
+    curl -i -X POST https://${APIGEE_HOST}/jwt-bearer-oauth/token \
+          -d assertion=$JWT -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+    ```
 
-   You should see as output, a payload like the following:
-   ```
-   {
-     "access_token": "K0FmSstQI6f4ZB6zs0t9jTIASGcx",
-     "issued_at": 1711417959197,
-     "expires_in": 1799,
-     "api_products": [
-       "verify-test-1"
-     ],
-     "issued": "2024-03-26T01:52:39.197Z",
-     "expires": "2024-03-26T02:22:38.197Z"
-   }
-   ```
+    You should see as output, a payload like the following:
+    ```
+    {
+      "access_token": "K0FmSstQI6f4ZB6zs0t9jTIASGcx",
+      "issued_at": 1711417959197,
+      "expires_in": 1799,
+      "api_products": [
+        "verify-test-1"
+      ],
+      "issued": "2024-03-26T01:52:39.197Z",
+      "expires": "2024-03-26T02:22:38.197Z"
+    }
+    ```
 
 11. The access token is now usable; it's a normal access token in Apigee.
-   If you like, you can demonstrate that, by invoking the verify proxy:
+    If you like, you can demonstrate that, by invoking the verify proxy:
 
-   ```
-   ACCESS_TOKEN=...token.string.from.response.above....
+    ```
+    ACCESS_TOKEN=...token.string.from.response.above....
 
-   curl -i -X GET https://${APIGEE_HOST}/verify-test/verify \
-         -H "Authorization: Bearer $ACCESS_TOKEN"
-   ```
+    curl -i -X GET https://${APIGEE_HOST}/verify-test/verify \
+          -H "Authorization: Bearer $ACCESS_TOKEN"
+    ```
 
 
 
