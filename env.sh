@@ -29,4 +29,4 @@ export APIGEE_ENV="<APIGEE_ENVIRONMENT_NAME>"
 # specify the hostname at which your API proxies can be reached.
 export APIGEE_HOST="<APIGEE_DOMAIN_NAME>"
 
-gcloud config set project $PROJECT
+gcloud config set project "$APIGEE_PROJECT"
