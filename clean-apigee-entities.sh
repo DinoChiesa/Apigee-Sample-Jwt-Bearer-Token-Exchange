@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PROXY_NAME=verify-test
-OAUTH_PROXY_NAME=jwt-bearer-oauth
-
 delete_product() {
     local product_name=$1
     if apigeecli products get --name "${product_name}" --org "$APIGEE_PROJECT" --token "$TOKEN" --disable-check >>/dev/null 2>&1; then
@@ -79,13 +76,16 @@ delete_apiproxy() {
 }
 
 MISSING_ENV_VARS=()
+
 [[ -z "$APIGEE_PROJECT" ]] && MISSING_ENV_VARS+=('APIGEE_PROJECT')
 [[ -z "$APIGEE_ENV" ]] && MISSING_ENV_VARS+=('APIGEE_ENV')
 [[ -z "$APIGEE_HOST" ]] && MISSING_ENV_VARS+=('APIGEE_HOST')
+[[ -z "$PROXY_NAME" ]] && MISSING_ENV_VARS+=('PROXY_NAME')
+[[ -z "$OAUTH_PROXY_NAME" ]] && MISSING_ENV_VARS+=('OAUTH_PROXY_NAME')
 
 [[ ${#MISSING_ENV_VARS[@]} -ne 0 ]] && {
     printf -v joined '%s,' "${MISSING_ENV_VARS[@]}"
-    printf "You must set these environment variables: %s\n" "${joined%,}"
+    printf "Have you sourced the env.sh file? You must set these environment variables: %s\n" "${joined%,}"
     exit 1
 }
 

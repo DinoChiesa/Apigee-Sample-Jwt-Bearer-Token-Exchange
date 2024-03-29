@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2023 Google LLC
+# Copyright 2023-2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# ==================================
+# do not change
+export PROXY_NAME=verify-test
+export OAUTH_PROXY_NAME=jwt-bearer-oauth
+export PRODUCT_NAME=verify-test-1
+export APP_NAME=verify-test-1-app
+# ==================================
 
 # set the GCP project and the name of the Apigee environment
 export PROJECT="<GCP_PROJECT_ID>"

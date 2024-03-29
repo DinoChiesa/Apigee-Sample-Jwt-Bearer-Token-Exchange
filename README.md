@@ -37,7 +37,7 @@ encryption.  Instead of sending a client id+secret pair, the client sends an
 _assertion_ that is signed with the client's private key.  No secret ever crosses the network.
 
 
-The request for token looks like so:
+The request for token (taken from RFC 7523) looks like so:
 
 ```
 POST /token HTTP/1.1
@@ -52,12 +52,14 @@ J9l-ZhwP[...omitted for brevity...]
 
 In the above, the assertion form parameter is a specially-formatted one-time-use
 JWT. The client self-signs this token with its _private key_, and then sends it
-with the request for an access token. The token dispensary must verify the
-signature on the JWT, thereby verifying that the sender possesses the private
-key, and then can generate an access token.  In this way, it's a "token
-exchange". The grant type is known as "jwt-bearer", and uses the grant type
-identifier of `urn:ietf:params:oauth:grant-type:jwt-bearer`.  (The version in the
-example request above is simply url-encoded.)
+with the request for an access token. The token dispensary must use the
+corresponding _public key_ to verify the signature on the JWT, thereby verifying
+that the sender possesses the private key; and at that point the token
+dispensary can generate an access token.  In this way, it's a "token exchange" -
+exchanging one kind of token for another. The grant type is known as
+"jwt-bearer", and uses the grant type identifier of
+`urn:ietf:params:oauth:grant-type:jwt-bearer`.  (The version in the example
+request above is simply url-encoded.)
 
 This is the style of token exchange process employed [by Google for service-to-service
 invocation](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
@@ -71,9 +73,12 @@ organization, to allow client apps to authenticate via the more secure jwt-beare
 
 ## Dependencies
 
+You need Apigee X to try out this sample.
+
 The helper scripts used here depend on various unix-ish utilities {npm and node,
-sed and tr, jq, openssl}, and also the bash shell. If you want to invoke calls, you need curl.
-You can do all the setup and testing without these tools, if you like.
+sed and tr, jq, openssl}, and also the bash shell. If you want to invoke calls,
+you need curl.  You can do all the setup and testing without these tools, if you
+like, but I don't provide specific instructions here for doing so.
 
 
 ## The Proxy Endpoint
@@ -82,11 +87,11 @@ This endpoint handles requests for token exchange. The basepath is `/jwt-bearer-
 
 It accepts as input a `POST /jwt-bearer-oauth/token`
 
-with a form-encoded payload (header `Content-Type` must be
-`x-www-form-urlencoded`) which includes:
+...with a form-encoded payload (header `Content-Type` must be
+`x-www-form-urlencoded`) which includes two form parameters:
 
 * grant_type = `urn:ietf:params:oauth:grant-type:jwt-bearer`
-* assertion = a JWT
+* assertion = a signed JWT
 
 The payload of the JWT should look something like this:
 ```
@@ -232,13 +237,9 @@ the shell icon:
 
    > You could do all of this yourself by manually fiddling with the Apigee UI to
    > configure all those things.  If you're not clear on how all of those entities all
-   > inter-related, you probably DO want to perform the manual configuration, but
-   > that's not something this sample will cover.
+   > inter-related, you probably DO want to perform the manual configuration, so you can
+   > understand it, but that's not something this sample will cover.
 
-   As part of its work, this script will create a new RSA keypair and store the
-   public key and the private key, separately, in the keys subdirectory. It will
-   attach the corresponding public key as a _custom attribute_ to the configured
-   application.
 
    When the script finishes it will show an output like the following:
    ```
@@ -247,57 +248,77 @@ the shell icon:
 
    export CLIENT_ID="MzZK7SeX086zD...."
 
-   -----------------------------
-
-   To call the API manually, copy/paste the above line to set the variable, and
-   then :
-
-     node ./create-self-signed-JWT.js
-
-   With the JWT returned from the above, invoke the token endpoint:
-
-     JWT=ey....copy-paste-from-output-of-above
-     curl -i -X POST https://your-host-name/jwt-bearer-oauth/token \
-         -d assertion=$JWT -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
    ```
 
-5. Navigate to the Apigee UI and examine the configured entities. Pay attention to the
+   Follow that instruction: Copy/paste the CLIENT\_ID statement, to export the variable into your environment.
+   ```
+   export CLIENT_ID="...your-client-id-here......."
+   ```
+
+5. Create a new RSA key pair.
+
+   ```
+   ./produce-key-pair.sh
+   ```
+
+   A key pair is a matched set of public+private keys.  Cryptographic signatures
+   created with the private key can be verified with the public key.
+
+   This script will store the public key and the private key, separately, in the
+   keys subdirectory.
+
+6. Associate the public key to the app.
+   ```
+   ./attach-latest-public-key-to-app.sh
+   ```
+
+   This script will set the corresponding public key as a _custom attribute_ on the
+   configured application. If there are multiple public keys in the keys directory, the
+   script will select the latest one. Since the public key is not a secret, there's no
+   problem attaching it as an attribute that can be read by any administrator.
+
+   At runtime, the token dispensing Proxy will be able to read that
+   custom attribute, and will thereby have access to the public key.
+
+   While the public key is stored in the app registration within Apigee, the
+   private key is stored _only locally_. The client app is the only system that
+   has access to the private key.  Any verifier - and in this case that is
+   Apigee - should not have access to the private key.
+
+
+7. Navigate to the Apigee UI and examine the configured entities. Pay attention to the
    configured app, which has the custom attribute containing the public key.
    ![app](./images/app-with-custom-attr.gif)
 
+8. Use the helper script to create a new signed JWT
 
-6. Copy/paste the CLIENT\_ID statement from the above, to export it into your environment.
-   ```
-   export CLIENT_ID="MzZK7SeX...your-client-id-here......."
-   ```
+   This will be used as an assertion that identifies the app.
 
-7. While the public key is registered in the app, within Apigee, the private key is stored
-   _only locally_. The client app is the only system that has access to the private key.
-   Apigee in this case should not have access to the private key.
+   With no arguments, the script will select the "latest" key in the directory,
+   and will read the private key and sign a JWT with that key.
 
-   In this repo, there's a helper script that read the private key and creates a new signed JWT.
    Run that script now.
    ```
    node ./create-self-signed-JWT.js
    ```
 
-   > Here again, you don't NEED to use this tool to create the JWT.  It's just a convenience.
-   > You can use any tool to create the JWT. If you want an interactive experience try
-   > [this one](https://dinochiesa.github.io/jwt) . You would need to provide
-   > _your_ private key, the one that the setup script created, and the counterpart to the
-   > registered public key. To get it, look in the keys subdirectory.
+   > Here again, it's not REQUIRED that you use this tool to create the JWT.  The tool is
+   > just a convenience.  You can use any tool to create the JWT. If you want an
+   > interactive experience try [this one](https://dinochiesa.github.io/jwt). You would
+   > need to provide _your_ private key, the one that the setup script created, and the
+   > counterpart to the registered public key. To get it, look in the keys subdirectory.
 
 
    The output will include a line like this:
    ```
-   [2024/03/26 01:47:37.499] [LOG] token: JWT=eyJhbGciOiJS...
+   [2024/03/26 01:47:37.499] [LOG] JWT=eyJhbGciOiJS...
    ```
    Copy/paste the JWT value into your shell, to set the variable:
    ```
    JWT=eyJhbGciOiJS...full-value-here....
    ```
 
-8. Now, using that self-signed JWT as the "credential", request an opaque access
+9. Now, using that self-signed JWT as the "credential", request an opaque access
    token from the Apigee token-dispensing proxy.
 
    This request uses the jwt-bearer grant type.
@@ -321,7 +342,7 @@ the shell icon:
    }
    ```
 
-9. The access token is now usable; it's a normal access token in Apigee.
+10. The access token is now usable; it's a normal access token in Apigee.
    If you like, you can demonstrate that, by invoking the verify proxy:
 
    ```
@@ -334,7 +355,6 @@ the shell icon:
 
 
 ## Exploring and Experimenting
-
 
 1. Copy/paste the self-signed JWT into a decoder like [here](https://dinochiesa.github.io/jwt)
    You can view the decoded contents of the header, and the payload.
@@ -360,7 +380,8 @@ the shell icon:
    | ---------------------------------------- | ------------------------------------------ |
    | aud claim must be token dispensing proxy | `--audience foo`                           |
    | lifespan < 300s                          | `--lifespan 600s`                          |
-   | issuer must be client ID                 | `--issuer 600s`                            |
+   | lifespan must be determined              | `--omit_iat`                               |
+   | issuer must be client ID                 | `--issuer fake-issuer`                     |
    | signed by the appropriate private key    | `--privatekey keys/alternative-key.pem`    |
 
 5. Create a new JWT, with a short lifespan:

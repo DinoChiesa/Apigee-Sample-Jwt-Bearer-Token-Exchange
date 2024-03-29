@@ -12,6 +12,7 @@ const fs = require("fs"),
   getopt = new Getopt([
     ["", "privatekey=ARG", "file containing PEM-encoded private key"],
     ["", "issuer=ARG", "value to use as issuer in the JWT. Default: CLIENT_ID"],
+    ["", "omit_iat", "a boolean, when present, omit the iat claim in the JWT"],
     ["", "audience=ARG", "audience claim for the JWT"],
     ["", "algorithm=ARG", "algorithm, one of the RS* variants"],
     ["", "lifespan=ARG", "lifespan in an expression like 60s, 15m, 1h, etc"]
@@ -81,11 +82,14 @@ if (opt.options.scope) {
 }
 
 const signingOptions = {
-  algorithm: opt.options.algorithm || "RS256",
-  expiresIn: opt.options.lifespan || "299s"
+        algorithm: opt.options.algorithm || "RS256",
+        expiresIn: opt.options.lifespan || "299s",
+        noTimestamp: opt.options.omit_iat
       };
+
+
 const token = jwt.sign(jwtContents, privkey, signingOptions);
-console.log("token: JWT=%s", token);
+console.log("JWT=%s", token);
 
 const decoded = jwt.decode(token, { json: true, complete: true });
 console.log("header: %s", JSON.stringify(decoded.header));

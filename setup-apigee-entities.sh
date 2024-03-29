@@ -39,40 +39,16 @@ create_app() {
     local NUM_APPS
     NUM_APPS=$(apigeecli apps get --name "${app_name}" --org "$APIGEE_PROJECT" --token "$TOKEN" --disable-check | jq -r .'| length')
     if [[ $NUM_APPS -eq 0 ]]; then
-        printf "Creating app-specific key pair\n"
-        create_rsa_key_pair
-
-        # replace newlines with spaces
-        pubkey=$(sed 's/$/ /' "$publicKeyFile" | tr -d '\n')
-
         apigeecli apps create --name "${app_name}" \
             --email "${developer}" --prods "${product_name}" --org "$APIGEE_PROJECT" --token "$TOKEN" \
-            --attrs public_key="${pubkey}",keyid="${keyid}",jwt_algorithm=RS256 \
             --disable-check
     else
         printf "The app already exists...\n"
     fi
 }
 
-create_rsa_key_pair() {
-    local TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
-    [[ -d keys ]] || mkdir keys
-    keyid="${TIMESTAMP}"
-    privateKeyPkcs8File="keys/key-${TIMESTAMP}-private-rsa.pem"
-    publicKeyFile="keys/key-${TIMESTAMP}-public-rsa.pem"
-    openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out "${privateKeyPkcs8File}"
-    openssl pkey -pubout -inform PEM -outform PEM \
-        -in "${privateKeyPkcs8File}" -out "${publicKeyFile}"
-    printf "Created keypair ${privateKeyPkcs8File} and ${publicKeyFile}\n"
-    # generate an alternative key, for testing purposes later
-    openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out "keys/alternative-key.pem"
-}
-
 import_and_deploy_apiproxy() {
     local proxy_name=$1
-    # REV=$(apigeecli apis create bundle -f "./bundles/${proxy_name}/apiproxy" -n "$proxy_name" --org "$PROJECT" --token "$TOKEN" --disable-check | jq ."revision" -r)
-    # apigeecli apis deploy --wait --name "$proxy_name" --ovr --rev "$REV" --org "$PROJECT" --env "$APIGEE_ENV" --token "$TOKEN" --disable-check
-
     apigeecli apis create bundle -f "./bundles/${proxy_name}/apiproxy" -n "$proxy_name" --org "$APIGEE_PROJECT" --token "$TOKEN" --disable-check
     apigeecli apis deploy --wait --name "$proxy_name" --ovr --org "$APIGEE_PROJECT" --env "$APIGEE_ENV" --token "$TOKEN" --disable-check
 }
@@ -81,10 +57,12 @@ MISSING_ENV_VARS=()
 [[ -z "$APIGEE_PROJECT" ]] && MISSING_ENV_VARS+=('APIGEE_PROJECT')
 [[ -z "$APIGEE_ENV" ]] && MISSING_ENV_VARS+=('APIGEE_ENV')
 [[ -z "$APIGEE_HOST" ]] && MISSING_ENV_VARS+=('APIGEE_HOST')
+[[ -z "$PROXY_NAME" ]] && MISSING_ENV_VARS+=('PROXY_NAME')
+[[ -z "$OAUTH_PROXY_NAME" ]] && MISSING_ENV_VARS+=('OAUTH_PROXY_NAME')
 
 [[ ${#MISSING_ENV_VARS[@]} -ne 0 ]] && {
     printf -v joined '%s,' "${MISSING_ENV_VARS[@]}"
-    printf "You must set these environment variables: %s\n" "${joined%,}"
+    printf "Have you sourced the env.sh file? You must set these environment variables: %s\n" "${joined%,}"
     exit 1
 }
 
@@ -110,7 +88,7 @@ printf "Configuring Apigee artifacts...\n"
 }
 
 printf "Creating API Product\n"
-create_apiproduct "verify-test-1"
+create_apiproduct "${PRODUCT_NAME}"
 
 DEVELOPER_EMAIL="${PROXY_NAME}-apigeesamples@acme.com"
 printf "Creating Developer %s\n" "${DEVELOPER_EMAIL}"
@@ -124,9 +102,9 @@ fi
 
 printf "Checking and possibly Creating Developer Apps\n"
 # shellcheck disable=SC2046,SC2162
-app_name="verify-test-1-app"
-create_app "$app_name" "${DEVELOPER_EMAIL}" "verify-test-1"
-CLIENT_ID=$(apigeecli apps get --name "${app_name}" --org "$APIGEE_PROJECT" --token "$TOKEN" --disable-check | jq -r ".[0].credentials[0] | .consumerKey")
+
+create_app "${APP_NAME}" "${DEVELOPER_EMAIL}" "${PRODUCT_NAME}"
+CLIENT_ID=$(apigeecli apps get --name "${APP_NAME}" --org "$APIGEE_PROJECT" --token "$TOKEN" --disable-check | jq -r ".[0].credentials[0] | .consumerKey")
 
 export SAMPLE_PROXY_BASEPATH="/v1/samples/$PROXY_NAME"
 export CLIENT_ID=${CLIENT_ID}
@@ -136,17 +114,4 @@ echo "All the Apigee artifacts are successfully deployed."
 echo "Copy/paste the following statement, into your shell:"
 echo " "
 echo "export CLIENT_ID=\"${CLIENT_ID}\""
-echo " "
-echo "-----------------------------"
-echo " "
-echo "To call the API manually, copy/paste the above line to set the variable, and"
-echo "then :"
-echo " "
-echo "  node ./create-self-signed-JWT.js"
-echo " "
-echo "With the JWT returned from the above, invoke the token endpoint: "
-echo " "
-echo "  JWT=ey....copy-paste-from-output-of-above"
-echo "  curl -i -X POST https://\${APIGEE_HOST}/jwt-bearer-oauth/token \\"
-echo "      -d assertion=\$JWT -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer"
 echo " "
