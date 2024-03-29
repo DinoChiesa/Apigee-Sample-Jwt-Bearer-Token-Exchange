@@ -20,13 +20,13 @@ create_rsa_key_pair() {
     keyid="${TIMESTAMP}"
     privateKeyPkcs8File="keys/key-${TIMESTAMP}-private-rsa.pem"
     publicKeyFile="keys/key-${TIMESTAMP}-public-rsa.pem"
-    openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out "${privateKeyPkcs8File}" --quiet
+    openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out "${privateKeyPkcs8File}"
     openssl pkey -pubout -inform PEM -outform PEM \
         -in "${privateKeyPkcs8File}" -out "${publicKeyFile}"
     printf "Created keypair\n  private: ${privateKeyPkcs8File}\n  public: ${publicKeyFile}\n"
 
     # also generate an alternative key, for testing purposes later
-    openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out "keys/alternative-key.pem" --quiet
+    openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out "keys/alternative-key.pem"
 }
 
 create_rsa_key_pair
