@@ -95,9 +95,7 @@ store and transmit (~32 bytes), and easy and fast for Apigee to verify.
 Exchanging a JWT for an opaque token allows a faster token transmission, and
 faster check of the token on the server side, during many many API requests.
 
-This token exchange - exchanging a JWT that identifies the service (an ID
-token), for an opaque oauth _access_ token - is the pattern used by APIs for
-most public Google services.
+Superior security is probably why Google uses this pattern for the APIs supporting its cloud services.
 
 
 ## Pre-requisites
